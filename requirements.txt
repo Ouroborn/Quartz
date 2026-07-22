@@ -1,3 +1,4 @@
 Django~=6.0.7
-Pillow
-markdown2
+Pillow~=12.3.0
+markdown2~=2.5.5
+openai~=2.47.0

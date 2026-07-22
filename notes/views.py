@@ -2,8 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse, HttpResponse
 from .models import Note, Tag, NoteRelation, UserSettings
 from .forms import NoteForm, UserSettingsForm
+from .ai_services import list_provider_models, run_ai_analysis
 
 @login_required
 def settings_view(request):
@@ -16,6 +18,30 @@ def settings_view(request):
     else:
         form = UserSettingsForm(instance=settings)
     return render(request, 'notes/settings.html', {'form': form})
+
+
+@login_required
+def get_provider_models(request):
+    """AJAX: вернуть актуальный список моделей для выбранного провайдера.
+
+    api_key не обязателен в query — если не передан, подставляем ключ,
+    уже сохранённый в UserSettings пользователя (чтобы не заставлять
+    вводить его повторно, если он уже был сохранён ранее).
+    """
+    provider = request.GET.get('provider', '')
+    api_key = request.GET.get('api_key', '')
+
+    if not api_key:
+        try:
+            api_key = request.user.settings.api_key
+        except UserSettings.DoesNotExist:
+            api_key = ''
+
+    if not provider:
+        return JsonResponse({'models': []})
+
+    models = list_provider_models(provider, api_key)
+    return JsonResponse({'models': models})
 
 @login_required
 def add_tag(request, pk):
@@ -37,12 +63,9 @@ def remove_tag(request, pk):
             note.tags.remove(tag)
             return JsonResponse({'status': 'ok'})
     return JsonResponse({'status': 'error'}, status=400)
-from .ai_services import run_ai_analysis
 import markdown2
 from django.db.models import Q
 import time
-
-from django.http import JsonResponse, HttpResponse
 
 @login_required
 def track_view(request, pk):

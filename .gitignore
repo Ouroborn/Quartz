@@ -1,5 +1,6 @@
 .venv
 .idea
+.junie
 db.sqlite3
 *.sqlite3
 media/

@@ -26,7 +26,8 @@
                 </span>
             {% endfor %}
             <div class="add-tag-box">
-                <input type="text" id="new-tag-input" placeholder="+" onkeypress="if(event.key==='Enter') addTag()">
+                <input type="text" id="new-tag-input" placeholder="новый тег" onkeypress="if(event.key==='Enter'){ event.preventDefault(); addTag(); }">
+                <button type="button" id="add-tag-btn" class="tag-add-btn" onclick="addTag()" title="Добавить тег">+</button>
             </div>
         </div>
     </header>
@@ -53,13 +54,41 @@
         opacity: 0.6;
     }
     .tag-remove:hover { opacity: 1; color: #ff5555; }
+    .add-tag-box {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
     .add-tag-box input {
-        width: 80px;
+        width: 100px;
         padding: 4px 8px;
         margin-bottom: 0;
         font-size: 13px;
         height: auto;
         border-style: dashed;
+    }
+    .tag-add-btn {
+        width: 24px;
+        height: 24px;
+        line-height: 1;
+        border-radius: 4px;
+        border: 1px dashed var(--border);
+        background: transparent;
+        color: var(--text-main);
+        cursor: pointer;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+    .tag-add-btn:hover {
+        background-color: var(--accent);
+        border-style: solid;
+    }
+    .tag-add-btn:disabled {
+        opacity: 0.5;
+        cursor: default;
     }
     .note-header {
         margin-bottom: 40px;
@@ -125,32 +154,58 @@
     }
     const csrftoken = getCookie('csrftoken');
 
+    function buildTagBadge(tagName) {
+        const badge = document.createElement('span');
+        badge.className = 'tag-badge';
+        badge.dataset.tag = tagName;
+
+        const removeBtn = document.createElement('span');
+        removeBtn.className = 'tag-remove';
+        removeBtn.innerHTML = '&times;';
+        removeBtn.onclick = () => removeTag(tagName);
+
+        badge.appendChild(document.createTextNode(tagName + ' '));
+        badge.appendChild(removeBtn);
+        return badge;
+    }
+
     async function addTag() {
         const input = document.getElementById('new-tag-input');
+        const addBtn = document.getElementById('add-tag-btn');
         const tagName = input.value.trim();
         if (!tagName) return;
+
+        // Не дублируем уже отображённый тег (регистронезависимо)
+        const lowerName = tagName.toLowerCase();
+        const already = Array.from(document.querySelectorAll('.tag-badge'))
+            .some(el => (el.dataset.tag || '').toLowerCase() === lowerName);
+        if (already) {
+            input.value = '';
+            return;
+        }
+
+        addBtn.disabled = true;
 
         const formData = new FormData();
         formData.append('tag_name', tagName);
 
-        const response = await fetch("{% url 'add_tag' note.pk %}", {
-            method: 'POST',
-            headers: {'X-CSRFToken': csrftoken},
-            body: formData
-        });
+        try {
+            const response = await fetch("{% url 'add_tag' note.pk %}", {
+                method: 'POST',
+                headers: {'X-CSRFToken': csrftoken},
+                body: formData
+            });
 
-        if (response.ok) {
-            const data = await response.json();
-            const container = document.getElementById('tag-container');
-            const addBox = container.querySelector('.add-tag-box');
-            
-            const newTag = document.createElement('span');
-            newTag.className = 'tag-badge';
-            newTag.dataset.tag = data.tag;
-            newTag.innerHTML = `${data.tag} <span class="tag-remove" onclick="removeTag('${data.tag}')">&times;</span>`;
-            
-            container.insertBefore(newTag, addBox);
-            input.value = '';
+            if (response.ok) {
+                const data = await response.json();
+                const container = document.getElementById('tag-container');
+                const addBox = container.querySelector('.add-tag-box');
+                container.insertBefore(buildTagBadge(data.tag), addBox);
+                input.value = '';
+            }
+        } finally {
+            addBtn.disabled = false;
+            input.focus();
         }
     }
 
@@ -165,7 +220,7 @@
         });
 
         if (response.ok) {
-            const tagEl = document.querySelector(`.tag-badge[data-tag="${tagName}"]`);
+            const tagEl = document.querySelector(`.tag-badge[data-tag="${CSS.escape(tagName)}"]`);
             if (tagEl) tagEl.remove();
         }
     }

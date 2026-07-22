@@ -5,19 +5,133 @@
 {% block content %}
 <div class="form-wrapper">
     <h2>Настройки ИИ</h2>
-    <form method="post">
+    <p class="form-description">
+        Выберите провайдера — список моделей запрашивается напрямую у него и всегда актуален.
+    </p>
+
+    <form method="post" class="settings-form" novalidate>
         {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="form-errors alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
         {% for field in form %}
-            <div class="field-group">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                {{ field.errors }}
+            <div class="field-group {% if field.errors %}has-error{% endif %}">
+                <label for="{{ field.id_for_label }}" class="form-label">
+                    {{ field.label }}
+                    {% if field.field.required %}<span class="required-star">*</span>{% endif %}
+                </label>
+
+                <div class="input-control">
+                    {{ field }}
+                    {% if field.name == 'model_name' %}
+                        <span id="models-loading" class="form-help" style="display:none;">Загружаем список моделей...</span>
+                        <span id="models-error" class="form-help text-danger" style="display:none;">Не удалось получить список моделей. Проверьте API-ключ.</span>
+                    {% endif %}
+                </div>
+
+                {% if field.help_text %}
+                    <small class="form-help">{{ field.help_text }}</small>
+                {% endif %}
+
+                {% if field.errors %}
+                    <div class="field-errors">
+                        {% for error in field.errors %}
+                            <span class="error-text">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
             </div>
         {% endfor %}
-        <div style="margin-top: 20px;">
-            <button type="submit" class="btn">Сохранить</button>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Сохранить</button>
             <a href="{% url 'index' %}" class="btn btn-outline">Отмена</a>
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const providerSelect = document.getElementById('id_provider');
+    const modelSelect = document.getElementById('id_model_name');
+    const apiKeyInput = document.getElementById('id_api_key');
+    const loadingLabel = document.getElementById('models-loading');
+    const errorLabel = document.getElementById('models-error');
+
+    if (!providerSelect || !modelSelect) return;
+
+    const modelsUrl = "{% url 'get_provider_models' %}";
+    // Модель, уже сохранённая в настройках (если есть) — чтобы выделить её после загрузки списка.
+    const currentModel = "{{ form.instance.model_name|default:'' }}";
+
+    let debounceTimer = null;
+
+    function fetchModels() {
+        const provider = providerSelect.value;
+        if (!provider) {
+            modelSelect.innerHTML = '';
+            return;
+        }
+
+        loadingLabel.style.display = 'inline';
+        errorLabel.style.display = 'none';
+        modelSelect.disabled = true;
+
+        const params = new URLSearchParams({ provider: provider });
+        const apiKey = apiKeyInput ? apiKeyInput.value.trim() : '';
+        if (apiKey) {
+            params.set('api_key', apiKey);
+        }
+
+        fetch(modelsUrl + '?' + params.toString(), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(resp => resp.json())
+            .then(data => {
+                modelSelect.innerHTML = '';
+                const models = data.models || [];
+
+                if (models.length === 0) {
+                    errorLabel.style.display = 'inline';
+                }
+
+                models.forEach(modelId => {
+                    const opt = document.createElement('option');
+                    opt.value = modelId;
+                    opt.textContent = modelId;
+                    if (modelId === currentModel) {
+                        opt.selected = true;
+                    }
+                    modelSelect.appendChild(opt);
+                });
+            })
+            .catch(() => {
+                errorLabel.style.display = 'inline';
+            })
+            .finally(() => {
+                loadingLabel.style.display = 'none';
+                modelSelect.disabled = false;
+            });
+    }
+
+    providerSelect.addEventListener('change', fetchModels);
+
+    // Перезапрашиваем список при изменении API-ключа (с задержкой, чтобы не долбить сервер на каждый символ)
+    if (apiKeyInput) {
+        apiKeyInput.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(fetchModels, 600);
+        });
+    }
+
+    // Если провайдер уже выбран при загрузке страницы (редактирование настроек) — сразу подгружаем модели
+    if (providerSelect.value) {
+        fetchModels();
+    }
+});
+</script>
 {% endblock %}

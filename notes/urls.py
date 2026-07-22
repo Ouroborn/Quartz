@@ -14,6 +14,7 @@ urlpatterns = [
     path('notes/<int:pk>/remove-tag/', views.remove_tag, name='remove_tag'),
     path('notes/<int:pk>/track-view/', views.track_view, name='track_view'),
     path('settings/', views.settings_view, name='settings'),
+    path('settings/models/', views.get_provider_models, name='get_provider_models'),
     path('graph/', views.quartz, name='quartz'),
     path('graph/data/', views.graph_data, name='graph_data'),
 ]
