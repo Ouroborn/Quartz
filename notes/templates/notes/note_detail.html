@@ -18,10 +18,16 @@
             <span>Просмотров: {{ note.views_count }}</span>
         </div>
         
-        <div class="note-tags">
+        <div class="note-tags" id="tag-container">
             {% for tag in note.tags.all %}
-                <span class="tag-badge">{{ tag.name }}</span>
+                <span class="tag-badge" data-tag="{{ tag.name }}">
+                    {{ tag.name }}
+                    <span class="tag-remove" onclick="removeTag('{{ tag.name }}')">&times;</span>
+                </span>
             {% endfor %}
+            <div class="add-tag-box">
+                <input type="text" id="new-tag-input" placeholder="+" onkeypress="if(event.key==='Enter') addTag()">
+            </div>
         </div>
     </header>
 
@@ -31,6 +37,30 @@
 </article>
 
 <style>
+    .tag-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background-color: var(--border);
+        color: var(--text-main);
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 13px;
+    }
+    .tag-remove {
+        cursor: pointer;
+        font-weight: bold;
+        opacity: 0.6;
+    }
+    .tag-remove:hover { opacity: 1; color: #ff5555; }
+    .add-tag-box input {
+        width: 80px;
+        padding: 4px 8px;
+        margin-bottom: 0;
+        font-size: 13px;
+        height: auto;
+        border-style: dashed;
+    }
     .note-header {
         margin-bottom: 40px;
         border-bottom: 1px solid var(--border);
@@ -77,4 +107,67 @@
         overflow-x: auto;
     }
 </style>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    async function addTag() {
+        const input = document.getElementById('new-tag-input');
+        const tagName = input.value.trim();
+        if (!tagName) return;
+
+        const formData = new FormData();
+        formData.append('tag_name', tagName);
+
+        const response = await fetch("{% url 'add_tag' note.pk %}", {
+            method: 'POST',
+            headers: {'X-CSRFToken': csrftoken},
+            body: formData
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            const container = document.getElementById('tag-container');
+            const addBox = container.querySelector('.add-tag-box');
+            
+            const newTag = document.createElement('span');
+            newTag.className = 'tag-badge';
+            newTag.dataset.tag = data.tag;
+            newTag.innerHTML = `${data.tag} <span class="tag-remove" onclick="removeTag('${data.tag}')">&times;</span>`;
+            
+            container.insertBefore(newTag, addBox);
+            input.value = '';
+        }
+    }
+
+    async function removeTag(tagName) {
+        const formData = new FormData();
+        formData.append('tag_name', tagName);
+
+        const response = await fetch("{% url 'remove_tag' note.pk %}", {
+            method: 'POST',
+            headers: {'X-CSRFToken': csrftoken},
+            body: formData
+        });
+
+        if (response.ok) {
+            const tagEl = document.querySelector(`.tag-badge[data-tag="${tagName}"]`);
+            if (tagEl) tagEl.remove();
+        }
+    }
+</script>
 {% endblock %}

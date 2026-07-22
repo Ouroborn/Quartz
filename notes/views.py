@@ -2,8 +2,41 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from .models import Note, Tag, NoteRelation
-from .forms import NoteForm
+from .models import Note, Tag, NoteRelation, UserSettings
+from .forms import NoteForm, UserSettingsForm
+
+@login_required
+def settings_view(request):
+    settings, created = UserSettings.objects.get_or_create(user=request.user)
+    if request.method == 'POST':
+        form = UserSettingsForm(request.POST, instance=settings)
+        if form.is_valid():
+            form.save()
+            return redirect('index')
+    else:
+        form = UserSettingsForm(instance=settings)
+    return render(request, 'notes/settings.html', {'form': form})
+
+@login_required
+def add_tag(request, pk):
+    note = get_object_or_404(Note, pk=pk, user=request.user)
+    tag_name = request.POST.get('tag_name', '').strip()
+    if tag_name:
+        tag, created = Tag.objects.get_or_create(name=tag_name)
+        note.tags.add(tag)
+        return JsonResponse({'status': 'ok', 'tag': tag.name})
+    return JsonResponse({'status': 'error'}, status=400)
+
+@login_required
+def remove_tag(request, pk):
+    note = get_object_or_404(Note, pk=pk, user=request.user)
+    tag_name = request.POST.get('tag_name', '').strip()
+    if tag_name:
+        tag = Tag.objects.filter(name=tag_name).first()
+        if tag:
+            note.tags.remove(tag)
+            return JsonResponse({'status': 'ok'})
+    return JsonResponse({'status': 'error'}, status=400)
 from .ai_services import run_ai_analysis
 import markdown2
 from django.db.models import Q

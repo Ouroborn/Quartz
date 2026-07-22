@@ -1,6 +1,23 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+class UserSettings(models.Model):
+    AI_MODELS = [
+        ('openai', 'OpenAI'),
+        ('claude', 'Claude'),
+        ('local', 'Local/Ollama'),
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="settings")
+    ai_model = models.CharField(max_length=20, choices=AI_MODELS, default='local', verbose_name="Модель ИИ")
+    api_key = models.CharField(max_length=255, blank=True, verbose_name="API Ключ")
+
+    class Meta:
+        verbose_name = "Настройки пользователя"
+        verbose_name_plural = "Настройки пользователей"
+
+    def __str__(self):
+        return f"Настройки для {self.user.username}"
+
 class Tag(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name="Название")
 

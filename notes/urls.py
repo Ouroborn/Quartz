@@ -10,6 +10,9 @@ urlpatterns = [
     path('notes/<int:pk>/edit/', views.note_edit, name='note_edit'),
     path('notes/<int:pk>/delete/', views.note_delete, name='note_delete'),
     path('notes/<int:pk>/export/', views.export_note_md, name='note_download'),
+    path('notes/<int:pk>/add-tag/', views.add_tag, name='add_tag'),
+    path('notes/<int:pk>/remove-tag/', views.remove_tag, name='remove_tag'),
+    path('settings/', views.settings_view, name='settings'),
     path('graph/', views.quartz, name='quartz'),
     path('graph/data/', views.graph_data, name='graph_data'),
 ]

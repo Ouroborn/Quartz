@@ -296,7 +296,7 @@
                 {% if user.is_authenticated %}
                     <span style="font-size: 13px; font-weight: bold; color: var(--text-header); margin-bottom: 4px; display: block;">{{ user.username }}</span>
                     <a href="#" class="nav-item" style="padding: 2px 0; font-size: 13px;">Профиль</a>
-                    <a href="#" class="nav-item" style="padding: 2px 0; font-size: 13px;">Настройки</a>
+                    <a href="{% url 'settings' %}" class="nav-item" style="padding: 2px 0; font-size: 13px;">Настройки</a>
                     <form action="{% url 'logout' %}" method="post" style="margin-top: 8px;">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-outline" style="width: 100%; padding: 6px; font-size: 13px;">Выход</button>

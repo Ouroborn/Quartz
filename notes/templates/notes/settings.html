@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Настройки - Quartz{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+    <h2>Настройки ИИ</h2>
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="field-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {{ field.errors }}
+            </div>
+        {% endfor %}
+        <div style="margin-top: 20px;">
+            <button type="submit" class="btn">Сохранить</button>
+            <a href="{% url 'index' %}" class="btn btn-outline">Отмена</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
