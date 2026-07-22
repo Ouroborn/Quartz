@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ note.title }} - Quartz{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'index' %}">Заметки</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ note.title }}</li>
+            </ol>
+        </nav>
+
+        <div class="card shadow-sm mb-4">
+            {% if note.cover %}
+                <img src="{{ note.cover.url }}" class="card-img-top" alt="{{ note.title }}" style="max-height: 400px; object-fit: cover;">
+            {% endif %}
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h1 class="card-title mb-0">{{ note.title }}</h1>
+                    <div>
+                        <a href="{% url 'export_note_md' note.pk %}" class="btn btn-outline-primary btn-sm">Скачать .md</a>
+                        <a href="{% url 'note_edit' note.pk %}" class="btn btn-outline-secondary btn-sm">Редактировать</a>
+                        <a href="{% url 'note_delete' note.pk %}" class="btn btn-outline-danger btn-sm">Удалить</a>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    {% for tag in note.tags.all %}
+                        <span class="badge bg-secondary">{{ tag.name }}</span>
+                    {% endfor %}
+                    <span class="text-muted ms-2 small">
+                        {{ note.created_at|date:"d.m.Y H:i" }} | Просмотров: {{ note.views_count }}
+                    </span>
+                </div>
+
+                <hr>
+
+                <div class="note-content">
+                    {{ content_html|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

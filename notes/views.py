@@ -1,0 +1,135 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
+from .models import Note, Tag, NoteRelation
+from .forms import NoteForm
+from .ai_services import run_ai_analysis
+import markdown2
+from django.db.models import Q
+
+from django.http import JsonResponse, HttpResponse
+
+@login_required
+def index(request):
+    query = request.GET.get('q')
+    tag_filter = request.GET.get('tag')
+    
+    notes = Note.objects.filter(user=request.user).order_by('-created_at')
+    
+    if query:
+        notes = notes.filter(Q(title__icontains=query) | Q(content__icontains=query))
+    
+    if tag_filter:
+        notes = notes.filter(tags__name=tag_filter)
+        
+    tags = Tag.objects.filter(notes__user=request.user).distinct()
+    
+    return render(request, 'notes/index.html', {
+        'notes': notes,
+        'tags': tags,
+        'query': query,
+        'tag_filter': tag_filter
+    })
+
+def signup(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('index')
+    else:
+        form = UserCreationForm()
+    return render(request, 'registration/signup.html', {'form': form})
+
+@login_required
+def note_detail(request, pk):
+    note = get_object_or_404(Note, pk=pk, user=request.user)
+    note.views_count += 1
+    note.save()
+    
+    content_html = markdown2.markdown(note.content)
+    
+    return render(request, 'notes/note_detail.html', {
+        'note': note,
+        'content_html': content_html
+    })
+
+@login_required
+def note_create(request):
+    if request.method == 'POST':
+        form = NoteForm(request.POST, request.FILES)
+        if form.is_valid():
+            note = form.save(commit=False)
+            note.user = request.user
+            note.save()
+            form.save_m2m()
+            run_ai_analysis(note)
+            return redirect('note_detail', pk=note.pk)
+    else:
+        form = NoteForm()
+    return render(request, 'notes/note_form.html', {'form': form, 'title': 'Создать заметку'})
+
+@login_required
+def note_edit(request, pk):
+    note = get_object_or_404(Note, pk=pk, user=request.user)
+    if request.method == 'POST':
+        form = NoteForm(request.POST, request.FILES, instance=note)
+        if form.is_valid():
+            note = form.save()
+            run_ai_analysis(note)
+            return redirect('note_detail', pk=note.pk)
+    else:
+        form = NoteForm(instance=note)
+    return render(request, 'notes/note_form.html', {'form': form, 'title': 'Редактировать заметку'})
+
+@login_required
+def note_delete(request, pk):
+    note = get_object_or_404(Note, pk=pk, user=request.user)
+    if request.method == 'POST':
+        note.delete()
+        return redirect('index')
+    return render(request, 'notes/note_confirm_delete.html', {'note': note})
+
+@login_required
+def quartz(request):
+    return render(request, 'notes/graph.html')
+
+@login_required
+def graph_data(request):
+    notes = Note.objects.filter(user=request.user)
+    relations = NoteRelation.objects.filter(source__user=request.user)
+    
+    nodes = []
+    for note in notes:
+        nodes.append({
+            'id': note.id,
+            'label': note.title,
+            'title': note.title,
+        })
+        
+    edges = []
+    seen_edges = set()
+    for rel in relations:
+        # Убираем дубликаты для визуализации (т.к. мы создавали обратные связи в ai_services)
+        edge = tuple(sorted((rel.source_id, rel.target_id)))
+        if edge not in seen_edges:
+            edges.append({
+                'from': rel.source_id,
+                'to': rel.target_id,
+                'title': rel.reason,
+                'value': rel.weight
+            })
+            seen_edges.add(edge)
+        
+    return JsonResponse({'nodes': nodes, 'edges': edges})
+
+@login_required
+def export_note_md(request, pk):
+    note = get_object_or_404(Note, pk=pk, user=request.user)
+    response = HttpResponse(note.content, content_type='text/markdown')
+    # Очищаем название файла от недопустимых символов
+    safe_title = "".join([c for c in note.title if c.isalnum() or c in (' ', '.', '_')]).strip()
+    response['Content-Disposition'] = f'attachment; filename="{safe_title}.md"'
+    return response

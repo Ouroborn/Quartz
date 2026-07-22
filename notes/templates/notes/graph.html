@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Граф знаний - Quartz{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1>Граф знаний</h1>
+        <p class="text-muted">Интерактивная карта ваших заметок и их связей.</p>
+        <div id="mynetwork" style="height: 600px; border: 1px solid lightgray; background-color: #ffffff; border-radius: 10px;"></div>
+    </div>
+</div>
+
+<script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<script type="text/javascript">
+    fetch("{% url 'graph_data' %}")
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('mynetwork');
+            const options = {
+                nodes: {
+                    shape: 'dot',
+                    size: 16,
+                    font: { size: 14, color: '#343a40' },
+                    color: {
+                        background: '#6f42c1',
+                        border: '#593196',
+                        highlight: { background: '#8c68cd', border: '#593196' }
+                    }
+                },
+                edges: {
+                    color: '#868e96',
+                    arrows: { to: { enabled: false } },
+                    width: 2
+                },
+                physics: {
+                    enabled: true,
+                    stabilization: { iterations: 150 }
+                }
+            };
+            
+            const network = new vis.Network(container, data, options);
+            
+            network.on("click", function (params) {
+                if (params.nodes.length > 0) {
+                    const nodeId = params.nodes[0];
+                    window.location.href = `/notes/${nodeId}/`;
+                }
+            });
+        });
+</script>
+{% endblock %}
