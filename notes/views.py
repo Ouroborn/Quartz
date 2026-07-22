@@ -40,8 +40,28 @@ def remove_tag(request, pk):
 from .ai_services import run_ai_analysis
 import markdown2
 from django.db.models import Q
+import time
 
 from django.http import JsonResponse, HttpResponse
+
+@login_required
+def track_view(request, pk):
+    note = get_object_or_404(Note, pk=pk, user=request.user)
+    
+    # Логика сессий
+    viewed_notes = request.session.get('viewed_notes', {})
+    current_time = time.time()
+    
+    last_view_time = viewed_notes.get(str(pk))
+    
+    if not last_view_time or (current_time - last_view_time > 1800): # 1800 сек = 30 мин
+        note.views_count += 1
+        note.save()
+        viewed_notes[str(pk)] = current_time
+        request.session['viewed_notes'] = viewed_notes
+        return JsonResponse({'status': 'view_tracked', 'count': note.views_count})
+    
+    return JsonResponse({'status': 'already_viewed'}, status=200)
 
 @login_required
 def index(request):
@@ -79,8 +99,6 @@ def signup(request):
 @login_required
 def note_detail(request, pk):
     note = get_object_or_404(Note, pk=pk, user=request.user)
-    note.views_count += 1
-    note.save()
     
     content_html = markdown2.markdown(note.content)
     

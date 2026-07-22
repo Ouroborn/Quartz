@@ -169,5 +169,23 @@
             if (tagEl) tagEl.remove();
         }
     }
+
+    // Smart View Tracking
+    setTimeout(async () => {
+        try {
+            const response = await fetch("{% url 'track_view' note.pk %}", {
+                method: 'POST',
+                headers: {'X-CSRFToken': csrftoken}
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.status === 'view_tracked') {
+                    console.log('View tracked:', data.count);
+                }
+            }
+        } catch (e) {
+            console.error('View tracking failed', e);
+        }
+    }, 15000); // 15 секунд
 </script>
 {% endblock %}
