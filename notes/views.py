@@ -59,7 +59,7 @@ def note_detail(request, pk):
 @login_required
 def note_create(request):
     if request.method == 'POST':
-        form = NoteForm(request.POST, request.FILES)
+        form = NoteForm(request.POST)
         if form.is_valid():
             note = form.save(commit=False)
             note.user = request.user
@@ -75,7 +75,7 @@ def note_create(request):
 def note_edit(request, pk):
     note = get_object_or_404(Note, pk=pk, user=request.user)
     if request.method == 'POST':
-        form = NoteForm(request.POST, request.FILES, instance=note)
+        form = NoteForm(request.POST, instance=note)
         if form.is_valid():
             note = form.save()
             run_ai_analysis(note)

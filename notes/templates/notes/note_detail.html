@@ -3,13 +3,14 @@
 {% block title %}{{ note.title }} - Quartz{% endblock %}
 
 {% block content %}
-<article class="note-detail">
-    {% if note.cover %}
-        <div class="note-cover">
-            <img src="{{ note.cover.url }}" alt="{{ note.title }}">
-        </div>
-    {% endif %}
+<div class="action-panel">
+    <a href="{% url 'note_download' note.pk %}" class="btn btn-outline">Скачать MD</a>
+    <a href="{% url 'note_edit' note.pk %}" class="btn">Редактировать</a>
+    <a href="{% url 'note_delete' note.pk %}" class="btn btn-outline" style="color: #ff5555 !important; border-color: #552222;">Удалить</a>
+    <a href="{% url 'index' %}" class="btn btn-outline">Назад</a>
+</div>
 
+<article class="note-detail">
     <header class="note-header">
         <h1 class="note-title">{{ note.title }}</h1>
         <div class="note-meta">
@@ -27,23 +28,9 @@
     <div class="note-content">
         {{ content_html|safe }}
     </div>
-
-    <footer class="note-actions">
-        <a href="{% url 'note_edit' note.pk %}" class="btn">Редактировать</a>
-        <a href="{% url 'note_delete' note.pk %}" class="btn btn-outline" style="color: #ff5555; border-color: #552222;">Удалить</a>
-        <a href="{% url 'index' %}" class="btn btn-outline">Назад</a>
-    </footer>
 </article>
 
 <style>
-    .note-cover img {
-        width: 100%;
-        max-height: 400px;
-        object-fit: cover;
-        border-radius: 12px;
-        margin-bottom: 30px;
-        border: 1px solid var(--border);
-    }
     .note-header {
         margin-bottom: 40px;
         border-bottom: 1px solid var(--border);
@@ -88,13 +75,6 @@
         padding: 20px;
         border-radius: 8px;
         overflow-x: auto;
-    }
-    .note-actions {
-        margin-top: 60px;
-        padding-top: 30px;
-        border-top: 1px solid var(--border);
-        display: flex;
-        gap: 15px;
     }
 </style>
 {% endblock %}

@@ -20,33 +20,36 @@
     </div>
 {% endif %}
 
-<div class="notes-grid">
-    {% for note in notes %}
-        <a href="{% url 'note_detail' note.pk %}" class="note-card">
-            {% if note.cover %}
-                <div class="note-card-cover">
-                    <img src="{{ note.cover.url }}" alt="{{ note.title }}">
-                </div>
-            {% endif %}
-            <div class="note-card-body">
-                <h3>{{ note.title }}</h3>
-                <div class="note-card-meta">
-                    {{ note.created_at|date:"d M Y" }} • 👀 {{ note.views_count }}
-                </div>
-                <p>{{ note.content|truncatewords:20 }}</p>
-                <div class="note-card-tags">
-                    {% for tag in note.tags.all|slice:":3" %}
-                        <span class="tag-badge" style="font-size: 11px; padding: 2px 6px;">{{ tag.name }}</span>
-                    {% endfor %}
-                </div>
-            </div>
-        </a>
-    {% empty %}
-        <div style="grid-column: 1 / -1; text-align: center; padding: 100px 0;">
-            <p style="font-size: 20px; color: #555;">Заметок пока нет. Создайте свою первую заметку!</p>
-            <a href="{% url 'note_create' %}" class="btn" style="margin-top: 20px;">+ Новая заметка</a>
-        </div>
-    {% endfor %}
+<div class="table-wrapper">
+    <table id="notesTable">
+        <thead>
+            <tr>
+                <th onclick="sortTable(0)">Название</th>
+                <th onclick="sortTable(1)">Дата создания</th>
+                <th onclick="sortTable(2)">Просмотры</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for note in notes %}
+                <tr>
+                    <td>
+                        <a href="{% url 'note_detail' note.pk %}" class="note-link">{{ note.title }}</a>
+                        <div class="note-tags-inline">
+                            {% for tag in note.tags.all %}
+                                <span class="tag-small">#{{ tag.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </td>
+                    <td data-value="{{ note.created_at|date:'YmdHis' }}">{{ note.created_at|date:"d.m.Y H:i" }}</td>
+                    <td>{{ note.views_count }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3" style="text-align: center; padding: 40px;">Заметок пока нет.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
 <style>
@@ -54,60 +57,113 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 40px;
+        margin-bottom: 30px;
         gap: 20px;
     }
     .search-bar {
         flex-grow: 1;
-        max-width: 500px;
+        max-width: 400px;
     }
-    .notes-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 25px;
-    }
-    .note-card {
+    .table-wrapper {
         background-color: var(--bg-sidebar);
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: 8px;
         overflow: hidden;
-        text-decoration: none;
-        color: inherit;
-        transition: transform 0.2s, border-color 0.2s;
-        display: flex;
-        flex-direction: column;
     }
-    .note-card:hover {
-        transform: translateY(-5px);
-        border-color: var(--accent);
-    }
-    .note-card-cover img {
+    table {
         width: 100%;
-        height: 160px;
-        object-fit: cover;
-    }
-    .note-card-body {
-        padding: 20px;
-    }
-    .note-card-body h3 {
-        margin-bottom: 10px;
-        font-size: 20px;
-    }
-    .note-card-meta {
-        font-size: 12px;
-        color: #666;
-        margin-bottom: 15px;
-    }
-    .note-card-body p {
+        border-collapse: collapse;
         font-size: 14px;
-        color: #aaa;
-        line-height: 1.5;
-        margin-bottom: 15px;
     }
-    .note-card-tags {
+    th {
+        text-align: left;
+        padding: 12px 20px;
+        background-color: #252525;
+        color: #888;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        user-select: none;
+    }
+    th:hover {
+        color: var(--text-header);
+        background-color: #2a2a2a;
+    }
+    td {
+        padding: 12px 20px;
+        border-top: 1px solid var(--border);
+    }
+    tr:hover td {
+        background-color: #1f1f1f;
+    }
+    .note-link {
+        font-weight: 600;
+        color: var(--text-header);
+        text-decoration: none;
+    }
+    .note-link:hover {
+        color: var(--accent);
+    }
+    .note-tags-inline {
+        margin-top: 4px;
         display: flex;
+        gap: 8px;
         flex-wrap: wrap;
-        gap: 5px;
+    }
+    .tag-small {
+        font-size: 11px;
+        color: #555;
     }
 </style>
+
+<script>
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById("notesTable");
+        switching = true;
+        dir = "asc";
+        while (switching) {
+            switching = false;
+            rows = table.rows;
+            for (i = 1; i < (rows.length - 1); i++) {
+                shouldSwitch = false;
+                x = rows[i].getElementsByTagName("TD")[n];
+                y = rows[i + 1].getElementsByTagName("TD")[n];
+                
+                var xVal = x.getAttribute("data-value") || x.innerText.toLowerCase();
+                var yVal = y.getAttribute("data-value") || y.innerText.toLowerCase();
+                
+                // Check if numeric
+                var xNum = parseFloat(xVal.replace(/[^\d.-]/g, ''));
+                var yNum = parseFloat(yVal.replace(/[^\d.-]/g, ''));
+                
+                if (!isNaN(xNum) && !isNaN(yNum) && n !== 0) { // Column 0 (title) is text
+                    if (dir == "asc") {
+                        if (xNum > yNum) { shouldSwitch = true; break; }
+                    } else if (dir == "desc") {
+                        if (xNum < yNum) { shouldSwitch = true; break; }
+                    }
+                } else {
+                    if (dir == "asc") {
+                        if (xVal > yVal) { shouldSwitch = true; break; }
+                    } else if (dir == "desc") {
+                        if (xVal < yVal) { shouldSwitch = true; break; }
+                    }
+                }
+            }
+            if (shouldSwitch) {
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                switchcount++;
+            } else {
+                if (switchcount == 0 && dir == "asc") {
+                    dir = "desc";
+                    switching = true;
+                }
+            }
+        }
+    }
+</script>
 {% endblock %}

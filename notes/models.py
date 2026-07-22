@@ -15,7 +15,6 @@ class Note(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notes", verbose_name="Пользователь")
     title = models.CharField(max_length=200, verbose_name="Заголовок")
     content = models.TextField(verbose_name="Содержимое (Markdown)")
-    cover = models.ImageField(upload_to='covers/', blank=True, null=True, verbose_name="Обложка")
     views_count = models.PositiveIntegerField(default=0, verbose_name="Количество просмотров")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Создано")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Обновлено")
