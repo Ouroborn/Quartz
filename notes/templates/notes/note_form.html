@@ -3,32 +3,84 @@
 {% block title %}{{ title }} - Quartz{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h2 class="card-title mb-4">{{ title }}</h2>
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    {% for field in form %}
-                        <div class="mb-3">
-                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                            {{ field }}
-                            {% if field.help_text %}
-                                <div class="form-text">{{ field.help_text }}</div>
-                            {% endif %}
-                            {% for error in field.errors %}
-                                <div class="text-danger small">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-                    {% endfor %}
-                    <div class="d-flex justify-content-between">
-                        <button type="submit" class="btn btn-primary">Сохранить</button>
-                        <a href="{% url 'index' %}" class="btn btn-outline-secondary">Отмена</a>
-                    </div>
-                </form>
-            </div>
+<div class="form-wrapper">
+    <h2>{{ title }}</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="field-group">
+            <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+            {{ form.title }}
+            {{ form.title.errors }}
         </div>
-    </div>
+
+        <div class="field-group">
+            <label for="{{ form.content.id_for_label }}">{{ form.content.label }}</label>
+            {{ form.content }}
+            {{ form.content.errors }}
+        </div>
+
+        <div class="field-group">
+            <label for="{{ form.cover.id_for_label }}">{{ form.cover.label }}</label>
+            <div id="image-preview-container" style="margin-bottom: 10px; display: none;">
+                <img id="image-preview" src="#" alt="Preview" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid var(--border);">
+            </div>
+            {{ form.cover }}
+            {{ form.cover.errors }}
+        </div>
+
+        <div class="field-group">
+            <label for="{{ form.tags.id_for_label }}">{{ form.tags.label }}</label>
+            {{ form.tags }}
+            {{ form.tags.errors }}
+        </div>
+
+        <div style="display: flex; gap: 15px; margin-top: 20px;">
+            <button type="submit" class="btn">Сохранить</button>
+            <a href="{% url 'index' %}" class="btn btn-outline">Отмена</a>
+        </div>
+    </form>
 </div>
+
+<style>
+    textarea {
+        min-height: 400px;
+        font-family: 'Courier New', Courier, monospace;
+    }
+    .field-group {
+        margin-bottom: 25px;
+    }
+    .errorlist {
+        color: #ff5555;
+        list-style: none;
+        padding: 0;
+        font-size: 14px;
+        margin-top: -15px;
+        margin-bottom: 15px;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const coverInput = document.querySelector('input[type="file"]');
+        const previewContainer = document.getElementById('image-preview-container');
+        const previewImage = document.getElementById('image-preview');
+
+        if (coverInput) {
+            coverInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImage.src = e.target.result;
+                        previewContainer.style.display = 'block';
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    previewContainer.style.display = 'none';
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}

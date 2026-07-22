@@ -3,21 +3,15 @@
 {% block title %}Регистрация - Quartz{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-4">
-        <div class="card shadow">
-            <div class="card-body">
-                <h3 class="card-title text-center mb-4">Регистрация</h3>
-                <form method="post">
-                    {% csrf_token %}
-                    {{ form.as_p }}
-                    <button type="submit" class="btn btn-success w-100">Зарегистрироваться</button>
-                </form>
-                <div class="text-center mt-3">
-                    <a href="{% url 'login' %}">Уже есть аккаунт? Войдите</a>
-                </div>
-            </div>
-        </div>
+<div style="max-width: 400px; margin: 40px auto; background-color: var(--bg-sidebar); padding: 40px; border-radius: 12px; border: 1px solid var(--border);">
+    <h2 style="text-align: center; margin-bottom: 30px;">Регистрация</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn" style="width: 100%; margin-top: 10px;">Зарегистрироваться</button>
+    </form>
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="{% url 'login' %}" style="font-size: 14px;">Уже есть аккаунт? Войдите</a>
     </div>
 </div>
 {% endblock %}

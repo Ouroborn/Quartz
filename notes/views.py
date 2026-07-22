@@ -94,7 +94,7 @@ def note_delete(request, pk):
 
 @login_required
 def quartz(request):
-    return render(request, 'notes/graph.html')
+    return render(request, 'notes/graph.html', {'is_graph_page': True})
 
 @login_required
 def graph_data(request):

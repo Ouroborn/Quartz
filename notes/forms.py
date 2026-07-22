@@ -9,5 +9,4 @@ class NoteForm(forms.ModelForm):
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Заголовок'}),
             'content': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Текст заметки (Markdown)', 'rows': 10}),
             'cover': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'tags': forms.SelectMultiple(attrs={'class': 'form-control'}),
         }

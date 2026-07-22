@@ -40,7 +40,7 @@ class Note(models.Model):
 class NoteRelation(models.Model):
     source = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="source_relations")
     target = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="target_relations")
-    reason = models.TextField(blank=True, verbose_name="Причина связи")
+    reason = models.CharField(max_length=255, blank=True, verbose_name="Причина связи")
     weight = models.FloatField(default=1.0, verbose_name="Вес связи")
     
     created_at = models.DateTimeField(auto_now_add=True)
