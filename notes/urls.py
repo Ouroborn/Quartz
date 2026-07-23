@@ -17,4 +17,5 @@ urlpatterns = [
     path('settings/models/', views.get_provider_models, name='get_provider_models'),
     path('graph/', views.quartz, name='quartz'),
     path('graph/data/', views.graph_data, name='graph_data'),
+    path('notes/<int:pk>/regenerate-tags/', views.regenerate_tags, name='regenerate_tags'),
 ]

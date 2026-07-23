@@ -5,19 +5,21 @@
 {% block content %}
 <div class="action-panel">
     <a href="{% url 'note_download' note.pk %}" class="btn btn-outline">Скачать MD</a>
+    <button type="button" id="regenerate-tags-btn" class="btn btn-outline" onclick="regenerateTags()">Обновить теги (ИИ)</button>
     <a href="{% url 'note_edit' note.pk %}" class="btn">Редактировать</a>
     <a href="{% url 'note_delete' note.pk %}" class="btn btn-outline" style="color: #ff5555 !important; border-color: #552222;">Удалить</a>
     <a href="{% url 'index' %}" class="btn btn-outline">Назад</a>
 </div>
+<div id="regenerate-status" class="regenerate-status" style="display:none;"></div>
 
 <article class="note-detail">
     <header class="note-header">
         <h1 class="note-title">{{ note.title }}</h1>
         <div class="note-meta">
-            <span>{{ note.created_at|date:"d M Y" }}</span> • 
+            <span>{{ note.created_at|date:"d M Y" }}</span> •
             <span>Просмотров: {{ note.views_count }}</span>
         </div>
-        
+
         <div class="note-tags" id="tag-container">
             {% for tag in note.tags.all %}
                 <span class="tag-badge" data-tag="{{ tag.name }}">
@@ -90,6 +92,13 @@
         opacity: 0.5;
         cursor: default;
     }
+    .regenerate-status {
+        margin-top: 12px;
+        font-size: 14px;
+    }
+    .regenerate-status.info { color: #999; }
+    .regenerate-status.error { color: #ff5555; }
+    .regenerate-status.success { color: #6bcB77; }
     .note-header {
         margin-bottom: 40px;
         border-bottom: 1px solid var(--border);
@@ -167,6 +176,49 @@
         badge.appendChild(document.createTextNode(tagName + ' '));
         badge.appendChild(removeBtn);
         return badge;
+    }
+
+    async function regenerateTags() {
+        const btn = document.getElementById('regenerate-tags-btn');
+        const status = document.getElementById('regenerate-status');
+
+        btn.disabled = true;
+        const originalText = btn.textContent;
+        btn.textContent = 'Генерируем теги...';
+        status.style.display = 'block';
+        status.className = 'regenerate-status info';
+        status.textContent = 'ИИ анализирует текущий текст заметки, это может занять несколько секунд...';
+
+        try {
+            const response = await fetch("{% url 'regenerate_tags' note.pk %}", {
+                method: 'POST',
+                headers: {'X-CSRFToken': csrftoken}
+            });
+            const data = await response.json();
+
+            if (response.ok && data.status === 'ok') {
+                const container = document.getElementById('tag-container');
+                const addBox = container.querySelector('.add-tag-box');
+
+                container.querySelectorAll('.tag-badge').forEach(el => el.remove());
+                data.tags.forEach(tagName => {
+                    container.insertBefore(buildTagBadge(tagName), addBox);
+                });
+
+                status.className = 'regenerate-status success';
+                status.textContent = `Готово: ${data.tags.length} тег(ов) обновлено.`;
+            } else {
+                status.className = 'regenerate-status error';
+                status.textContent = data.message || 'Не удалось обновить теги.';
+            }
+        } catch (e) {
+            status.className = 'regenerate-status error';
+            status.textContent = 'Ошибка сети при обращении к серверу.';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            setTimeout(() => { status.style.display = 'none'; }, 6000);
+        }
     }
 
     async function addTag() {
