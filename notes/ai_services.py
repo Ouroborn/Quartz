@@ -9,6 +9,37 @@ logger = logging.getLogger(__name__)
 
 MAX_TAGS = 25
 
+# Провайдеры отдают через /models вообще все свои модели — эмбеддинги,
+# генерацию картинок, TTS/STT, модерацию и т.п. Явного флага "это чат-модель"
+# API не даёт, поэтому отсеиваем по ключевым словам в названии. Список можно
+# смело дополнять, если у конкретного провайдера пролезет что-то новое.
+EXCLUDED_MODEL_KEYWORDS = [
+    "embed",           # text-embedding-3-small, embedding-001 и т.д.
+    "image",           # dall-e, imagen, gpt-image
+    "dall-e",
+    "imagen",
+    "vision-preview",  # старые vision-only модели без обычного чата
+    "tts",             # text-to-speech
+    "whisper",         # speech-to-text
+    "audio",
+    "moderation",
+    "translate",
+    "research",
+    "aqa",             # attributed question answering (Gemini)
+    "similarity",
+    "search",
+    "edit",            # code/text-edit модели, не chat-completions
+    "realtime",
+    "nano-banana",
+    "computer-use",
+]
+
+
+def _is_chat_model(model_id):
+    lowered = model_id.lower()
+    return not any(keyword in lowered for keyword in EXCLUDED_MODEL_KEYWORDS)
+
+
 # Единая точка правды о провайдерах: base_url, дефолтный ключ, фильтр моделей.
 PROVIDER_CONFIG = {
     "gemini": {
@@ -60,6 +91,8 @@ def list_provider_models(provider, api_key):
     model_filter = PROVIDER_CONFIG[provider]["model_filter"]
     if model_filter:
         model_ids = [m for m in model_ids if model_filter(m)]
+
+    model_ids = [m for m in model_ids if _is_chat_model(m)]
 
     return sorted(model_ids)
 
