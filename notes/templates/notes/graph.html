@@ -3,66 +3,310 @@
 {% block title %}Граф связей - Quartz{% endblock %}
 
 {% block content %}
-<div id="mynetwork" style="width: 100%; height: 100vh; background-color: #1e1e1e;"></div>
+<div style="position: relative; width: 100%; height: 100vh; overflow: hidden; background-color: #121212;">
+
+    <div id="mynetwork" style="width: 100%; height: 100%;"></div>
+
+    <div class="graph-settings-panel">
+        <div class="settings-header" onclick="toggleSettings()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>Настройки графа</span>
+            <span id="toggle-icon" style="margin-left: auto;">▼</span>
+        </div>
+
+        <div id="settings-content" class="settings-content">
+            <!-- Новый блок выбора режима -->
+            <div class="setting-item">
+                <div class="setting-label">
+                    <span>Режим структуры</span>
+                </div>
+                <select id="select-graph-mode" class="graph-mode-select">
+                    <option value="organic">Органика</option>
+                    <option value="quartz" selected>Кварц</option>
+                </select>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0 5px 0;">
+
+            <div class="setting-item">
+                <div class="setting-label">
+                    <span>Сила отталкивания</span>
+                    <span id="val-repel" class="setting-value">120</span>
+                </div>
+                <input type="range" id="range-repel" min="10" max="300" value="120">
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label">
+                    <span>Гравитация центра</span>
+                    <span id="val-gravity" class="setting-value">0.005</span>
+                </div>
+                <input type="range" id="range-gravity" min="0" max="0.05" step="0.001" value="0.005">
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label">
+                    <span>Длина связей</span>
+                    <span id="val-link-length" class="setting-value">150</span>
+                </div>
+                <input type="range" id="range-link-length" min="50" max="400" value="150">
+            </div>
+
+            <div class="setting-item">
+                <div class="setting-label">
+                    <span>Размер узлов</span>
+                    <span id="val-node-size" class="setting-value">10</span>
+                </div>
+                <input type="range" id="range-node-size" min="5" max="40" value="16">
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .graph-settings-panel {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 280px;
+        background: rgba(30, 30, 30, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        color: #e0e0e0;
+        font-family: system-ui, -apple-system, sans-serif;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        z-index: 10;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    .settings-header {
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        background: rgba(0, 0, 0, 0.2);
+        user-select: none;
+    }
+    .settings-header:hover { background: rgba(255, 255, 255, 0.05); }
+    .settings-content {
+        padding: 0 15px 15px 15px;
+        display: block;
+    }
+    .setting-item { margin-top: 15px; }
+    .setting-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        margin-bottom: 8px;
+        color: #aaa;
+    }
+    .setting-value { color: #9d66b8; font-weight: bold; }
+
+    /* Стили для Select */
+    .graph-mode-select {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        color: #e0e0e0;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-family: inherit;
+        font-size: 13px;
+        cursor: pointer;
+        outline: none;
+        appearance: none;
+    }
+    .graph-mode-select:focus {
+        border-color: #9d66b8;
+    }
+    .graph-mode-select option {
+        background: #1e1e1e;
+        color: #e0e0e0;
+    }
+
+    input[type=range] {
+        -webkit-appearance: none;
+        width: 100%;
+        background: transparent;
+    }
+    input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        height: 14px;
+        width: 14px;
+        border-radius: 50%;
+        background: #9d66b8;
+        cursor: pointer;
+        margin-top: -5px;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 4px;
+        cursor: pointer;
+        background: #444;
+        border-radius: 2px;
+    }
+</style>
 
 <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 <script type="text/javascript">
-    document.addEventListener('DOMContentLoaded', function() {
-        fetch("{% url 'graph_data' %}")
-            .then(response => response.json())
-            .then(data => {
-                const container = document.getElementById('mynetwork');
-                const options = {
-                    nodes: {
-                        shape: 'dot',
-                        size: 20,
-                        font: { size: 14, color: '#ffffff' },
-                        borderWidth: 2,
-                        shadow: true,
-                        color: {
-                            background: '#7d4698',
-                            border: '#333333',
-                            highlight: { background: '#9d66b8', border: '#ffffff' }
-                        }
-                    },
-                    edges: {
-                        color: '#444444',
-                        width: 1,
-                        smooth: { type: 'continuous' },
-                        hoverWidth: 2
-                    },
-                    physics: {
-                        enabled: true,
-                        barnesHut: {
-                            gravitationalConstant: -2000,
-                            centralGravity: 0.3,
-                            springLength: 95
-                        },
-                        stabilization: { iterations: 200 }
-                    },
-                    interaction: {
-                        hover: true,
-                        tooltipDelay: 200
-                    }
-                };
-                
-                const network = new vis.Network(container, data, options);
-                
-                network.on("click", function (params) {
-                    if (params.nodes.length > 0) {
-                        const nodeId = params.nodes[0];
-                        window.location.href = `/notes/${nodeId}/`;
-                    }
-                });
-                
-                // Изменение курсора при наведении на узлы
-                network.on("hoverNode", function () {
-                    container.style.cursor = 'pointer';
-                });
-                network.on("blurNode", function () {
-                    container.style.cursor = 'default';
-                });
+function toggleSettings() {
+    const content = document.getElementById('settings-content');
+    const icon = document.getElementById('toggle-icon');
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        icon.innerText = '▼';
+    } else {
+        content.style.display = 'none';
+        icon.innerText = '◀';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    fetch("{% url 'graph_data' %}")
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('mynetwork');
+
+            // --- 1. АНАЛИЗ СВЯЗЕЙ (ВЕСА УЗЛОВ) ---
+            // Считаем, сколько ребер (связей) подходит к каждому узлу
+            const degrees = {};
+            data.nodes.forEach(n => degrees[n.id] = 0);
+            data.edges.forEach(e => {
+                if (degrees[e.from] !== undefined) degrees[e.from]++;
+                if (degrees[e.to] !== undefined) degrees[e.to]++;
             });
-    });
+
+            // Находим максимальное количество связей для расчета градиента
+            let maxDegree = 1;
+            Object.values(degrees).forEach(d => { if(d > maxDegree) maxDegree = d; });
+
+            // Функция интерполяции цвета от темного к яркому
+            function getColorForDegree(degree, max) {
+                const ratio = max > 0 ? (degree / max) : 0;
+
+                // Темный кварц (1 связь): rgb(74, 59, 92)
+                // Горячий кристалл (Максимум связей): rgb(238, 130, 238)
+                const r = Math.round(74 + ratio * (238 - 74));
+                const g = Math.round(59 + ratio * (130 - 59));
+                const b = Math.round(92 + ratio * (238 - 92));
+
+                return {
+                    hex: `rgb(${r}, ${g}, ${b})`,
+                    rgba: `rgba(${r}, ${g}, ${b}, 0.7)` // Для свечения
+                };
+            }
+
+            // --- 2. ПРИМЕНЕНИЕ ДИНАМИЧЕСКОГО ДИЗАЙНА К УЗЛАМ ---
+            let initialBaseSize = parseInt(document.getElementById('range-node-size').value);
+
+            data.nodes.forEach(node => {
+                const degree = degrees[node.id];
+                const colors = getColorForDegree(degree, maxDegree);
+
+                node.size = initialBaseSize + (degree * 2); // Центральные узлы будут крупнее
+                node.color = {
+                    background: colors.hex,
+                    border: colors.hex,
+                    highlight: { background: '#ffffff', border: colors.hex }
+                };
+                node.shadow = {
+                    enabled: true,
+                    color: colors.rgba,
+                    size: 10 + (degree * 3) // Чем больше связей, тем сильнее свечение
+                };
+                // Чтобы текст не терялся на фоне линий
+                node.font = { size: 14, color: '#e0e0e0', strokeWidth: 4, strokeColor: '#121212' };
+            });
+
+            // Заворачиваем данные в DataSet (позволяет обновлять их на лету ползунками)
+            const nodesDataSet = new vis.DataSet(data.nodes);
+            const edgesDataSet = new vis.DataSet(data.edges);
+
+            // --- 3. НАСТРОЙКИ ФИЗИКИ ---
+            let currentOptions = {
+                nodes: { borderWidth: 0 },
+                edges: {
+                    width: 1,
+                    color: { color: '#333333', highlight: '#9d66b8', hover: '#666666' },
+                    smooth: false, // Кварц по умолчанию
+                    selectionWidth: 2,
+                    hoverWidth: 1.5
+                },
+                physics: {
+                    enabled: true,
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: {
+                        gravitationalConstant: -120,
+                        centralGravity: 0.005,
+                        springLength: 150,
+                        springConstant: 0.05,
+                        damping: 0.6
+                    },
+                    stabilization: { iterations: 200, fit: true }
+                },
+                interaction: { hover: true, hoverConnectedEdges: true, zoomView: true }
+            };
+
+            const network = new vis.Network(container, { nodes: nodesDataSet, edges: edgesDataSet }, currentOptions);
+
+            // --- 4. ОБРАБОТЧИКИ ИНТЕРФЕЙСА ---
+            function applyGraphMode(mode) {
+                if (mode === 'quartz') {
+                    network.setOptions({ nodes: { shape: 'diamond' }, edges: { smooth: false } });
+                } else {
+                    network.setOptions({ nodes: { shape: 'dot' }, edges: { smooth: { type: 'dynamic' } } });
+                }
+            }
+
+            const uiGraphMode = document.getElementById('select-graph-mode');
+            applyGraphMode(uiGraphMode.value);
+            uiGraphMode.addEventListener('change', function() { applyGraphMode(this.value); });
+
+            network.on("click", function (params) {
+                if (params.nodes.length > 0) window.location.href = `/notes/${params.nodes[0]}/`;
+            });
+            network.on("hoverNode", () => container.style.cursor = 'pointer');
+            network.on("blurNode", () => container.style.cursor = 'default');
+
+            const uiRepel = document.getElementById('range-repel');
+            const uiGravity = document.getElementById('range-gravity');
+            const uiLinkLen = document.getElementById('range-link-length');
+            const uiNodeSize = document.getElementById('range-node-size');
+
+            function updateGraphPhysics() {
+                document.getElementById('val-repel').innerText = uiRepel.value;
+                document.getElementById('val-gravity').innerText = uiGravity.value;
+                document.getElementById('val-link-length').innerText = uiLinkLen.value;
+                document.getElementById('val-node-size').innerText = uiNodeSize.value;
+
+                // Обновляем размер с учетом веса (крупные узлы остаются крупными относительно мелких)
+                const newBaseSize = parseInt(uiNodeSize.value);
+                const updatedNodes = data.nodes.map(node => ({
+                    id: node.id,
+                    size: newBaseSize + (degrees[node.id] * 2)
+                }));
+                nodesDataSet.update(updatedNodes);
+
+                network.setOptions({
+                    physics: {
+                        forceAtlas2Based: {
+                            gravitationalConstant: -parseInt(uiRepel.value),
+                            centralGravity: parseFloat(uiGravity.value),
+                            springLength: parseInt(uiLinkLen.value)
+                        }
+                    }
+                });
+            }
+
+            [uiRepel, uiGravity, uiLinkLen, uiNodeSize].forEach(slider => {
+                slider.addEventListener('input', updateGraphPhysics);
+            });
+        });
+});
 </script>
 {% endblock %}
