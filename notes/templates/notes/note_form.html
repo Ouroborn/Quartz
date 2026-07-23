@@ -46,12 +46,6 @@
             {{ form.content.errors }}
         </div>
 
-        <div class="field-group">
-            <label for="{{ form.tags.id_for_label }}">{{ form.tags.label }}</label>
-            {{ form.tags }}
-            {{ form.tags.errors }}
-        </div>
-
         <div style="display: flex; gap: 15px; margin-top: 20px;">
             <button type="submit" class="btn">Сохранить</button>
             <a href="{% url 'index' %}" class="btn btn-outline">Отмена</a>
