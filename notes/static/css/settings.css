@@ -1,0 +1,68 @@
+.form-description {
+    color: var(--text-dim);
+    margin-bottom: 25px;
+}
+
+.form-errors {
+    margin-bottom: 20px;
+}
+
+.alert-danger {
+    color: var(--danger);
+    border: 1px solid var(--danger-border);
+    background: color-mix(in srgb, var(--danger) 10%, transparent);
+    padding: 12px 15px;
+    border-radius: 6px;
+}
+
+.settings-form .field-group {
+    margin-bottom: 20px;
+}
+
+.settings-form .field-group.has-error input,
+.settings-form .field-group.has-error select {
+    border-color: var(--danger);
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: var(--text-main);
+}
+
+.required-star {
+    color: var(--danger);
+    margin-left: 2px;
+}
+
+.input-control {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-help {
+    font-size: 12px;
+    color: var(--text-disabled);
+}
+
+.text-danger {
+    color: var(--danger);
+}
+
+.field-errors {
+    margin-top: 6px;
+}
+
+.field-errors .error-text {
+    color: var(--danger);
+    font-size: 13px;
+    display: block;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+}

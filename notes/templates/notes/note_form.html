@@ -1,36 +1,12 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ title }} - Quartz{% endblock %}
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
 <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
-<style>
-    .editor-toolbar {
-        background-color: #252525;
-        border-color: var(--border);
-    }
-    .editor-toolbar button {
-        color: var(--text-main) !important;
-    }
-    .editor-toolbar button:hover, .editor-toolbar button.active {
-        background-color: var(--accent);
-    }
-    .CodeMirror {
-        background-color: #1e1e1e !important;
-        color: var(--text-main) !important;
-        border-color: var(--border) !important;
-    }
-
-    .CodeMirror-cursor {
-        border-left-color: var(--text-main) !important;
-    }
-
-    .editor-preview {
-        background-color: #1e1e1e !important;
-        color: var(--text-main) !important;
-    }
-</style>
+<link rel="stylesheet" href="{% static 'css/note_form.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -38,7 +14,7 @@
     <h2>{{ title }}</h2>
     <form method="post" novalidate>
         {% csrf_token %}
-        
+
         <div class="field-group">
             <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
             {{ form.title }}
@@ -47,57 +23,20 @@
 
         <div class="field-group">
             <label for="{{ form.content.id_for_label }}">{{ form.content.label }}</label>
-            {{ form.content }}
             {{ form.content.errors }}
+            <div id="content-editor-wrapper" data-autosave-id="{{ note.pk|default:'new' }}">
+                {{ form.content }}
+            </div>
         </div>
 
-        <div style="display: flex; gap: 15px; margin-top: 20px;">
+        <div class="form-actions-row">
             <button type="submit" class="btn">Сохранить</button>
             <a href="{% url 'index' %}" class="btn btn-outline">Отмена</a>
         </div>
     </form>
 </div>
+{% endblock %}
 
-<style>
-    textarea {
-        min-height: 400px;
-        font-family: 'Courier New', Courier, monospace;
-    }
-    .field-group {
-        margin-bottom: 25px;
-    }
-    .errorlist {
-        color: #ff5555;
-        list-style: none;
-        padding: 0;
-        font-size: 14px;
-        margin-top: -15px;
-        margin-bottom: 15px;
-    }
-</style>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const easyMDE = new EasyMDE({
-            element: document.getElementById('id_content'),
-            spellChecker: false,
-            autosave: {
-                enabled: true,
-                uniqueId: "note_editor_{{ note.pk|default:'new' }}",
-                delay: 1000,
-            },
-            status: false,
-            minHeight: "400px",
-            placeholder: "Начните писать свою заметку...",
-            renderingConfig: {
-                singleLineBreaks: false,
-                codeSyntaxHighlighting: true,
-            },
-            theme: "quartz" // This is just a class prefix
-        });
-
-        // Синхронизация при уходе фокуса для "Live Preview" эффекта
-        // Хотя EasyMDE и так обновляет textarea, мы можем добавить логику если нужно.
-    });
-</script>
+{% block extra_body %}
+<script src="{% static 'js/note_form.js' %}"></script>
 {% endblock %}

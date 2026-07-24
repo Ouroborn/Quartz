@@ -1,0 +1,20 @@
+.delete-confirm-wrap {
+    text-align: center;
+    padding: 60px 0;
+}
+
+.delete-confirm-wrap h2 {
+    color: var(--danger);
+    margin-bottom: 20px;
+}
+
+.delete-confirm-wrap p {
+    margin-bottom: 30px;
+    font-size: 18px;
+}
+
+.delete-confirm-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}

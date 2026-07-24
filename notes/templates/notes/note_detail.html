@@ -1,298 +1,57 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ note.title }} - Quartz{% endblock %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/note_detail.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="action-panel">
-    <a href="{% url 'note_download' note.pk %}" class="btn btn-outline">Скачать MD</a>
-    <button type="button" id="regenerate-tags-btn" class="btn btn-outline" onclick="regenerateTags()">Обновить теги (ИИ)</button>
-    <a href="{% url 'note_edit' note.pk %}" class="btn">Редактировать</a>
-    <a href="{% url 'note_delete' note.pk %}" class="btn btn-outline" style="color: #ff5555 !important; border-color: #552222;">Удалить</a>
-    <a href="{% url 'index' %}" class="btn btn-outline">Назад</a>
-</div>
-<div id="regenerate-status" class="regenerate-status" style="display:none;"></div>
+<div id="note-detail-root"
+     data-regenerate-tags-url="{% url 'regenerate_tags' note.pk %}"
+     data-add-tag-url="{% url 'add_tag' note.pk %}"
+     data-remove-tag-url="{% url 'remove_tag' note.pk %}"
+     data-track-view-url="{% url 'track_view' note.pk %}">
 
-<article class="note-detail">
-    <header class="note-header">
-        <h1 class="note-title">{{ note.title }}</h1>
-        <div class="note-meta">
-            <span>{{ note.created_at|date:"d M Y" }}</span> •
-            <span>Просмотров: {{ note.views_count }}</span>
-        </div>
-
-        <div class="note-tags" id="tag-container">
-            {% for tag in note.tags.all %}
-                <span class="tag-badge" data-tag="{{ tag.name }}">
-                    {{ tag.name }}
-                    <span class="tag-remove" onclick="removeTag('{{ tag.name }}')">&times;</span>
-                </span>
-            {% endfor %}
-            <div class="add-tag-box">
-                <input type="text" id="new-tag-input" placeholder="новый тег" onkeypress="if(event.key==='Enter'){ event.preventDefault(); addTag(); }">
-                <button type="button" id="add-tag-btn" class="tag-add-btn" onclick="addTag()" title="Добавить тег">+</button>
-            </div>
-        </div>
-    </header>
-
-    <div class="note-content">
-        {{ content_html|safe }}
+    <div class="action-panel">
+        <a href="{% url 'note_download' note.pk %}" class="btn btn-outline">Скачать MD</a>
+        <button type="button" id="regenerate-tags-btn" class="btn btn-outline">Обновить теги (ИИ)</button>
+        <a href="{% url 'note_edit' note.pk %}" class="btn">Редактировать</a>
+        <a href="{% url 'note_delete' note.pk %}" class="btn btn-outline delete-link">Удалить</a>
+        <a href="{% url 'index' %}" class="btn btn-outline">Назад</a>
     </div>
-</article>
+    <div id="regenerate-status" class="regenerate-status" style="display:none;"></div>
 
-<style>
-    .tag-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        background-color: var(--border);
-        color: var(--text-main);
-        padding: 4px 10px;
-        border-radius: 4px;
-        font-size: 13px;
-    }
-    .tag-remove {
-        cursor: pointer;
-        font-weight: bold;
-        opacity: 0.6;
-    }
-    .tag-remove:hover { opacity: 1; color: #ff5555; }
-    .add-tag-box {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-    }
-    .add-tag-box input {
-        width: 100px;
-        padding: 4px 8px;
-        margin-bottom: 0;
-        font-size: 13px;
-        height: auto;
-        border-style: dashed;
-    }
-    .tag-add-btn {
-        width: 24px;
-        height: 24px;
-        line-height: 1;
-        border-radius: 4px;
-        border: 1px dashed var(--border);
-        background: transparent;
-        color: var(--text-main);
-        cursor: pointer;
-        font-size: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-    }
-    .tag-add-btn:hover {
-        background-color: var(--accent);
-        border-style: solid;
-    }
-    .tag-add-btn:disabled {
-        opacity: 0.5;
-        cursor: default;
-    }
-    .regenerate-status {
-        margin-top: 12px;
-        font-size: 14px;
-    }
-    .regenerate-status.info { color: #999; }
-    .regenerate-status.error { color: #ff5555; }
-    .regenerate-status.success { color: #6bcB77; }
-    .note-header {
-        margin-bottom: 40px;
-        border-bottom: 1px solid var(--border);
-        padding-bottom: 20px;
-    }
-    .note-title {
-        font-size: 42px;
-        margin-bottom: 15px;
-        font-weight: 800;
-        letter-spacing: -1px;
-    }
-    .note-meta {
-        font-size: 14px;
-        color: #666;
-        margin-bottom: 20px;
-    }
-    .note-tags {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-    .note-content {
-        line-height: 1.7;
-        font-size: 18px;
-        color: var(--text-main);
-    }
-    .note-content h1, .note-content h2, .note-content h3 {
-        margin-top: 40px;
-        margin-bottom: 20px;
-    }
-    .note-content p {
-        margin-bottom: 20px;
-    }
-    .note-content code {
-        background: #2d2d2d;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-family: monospace;
-    }
-    .note-content pre {
-        background: #2d2d2d;
-        padding: 20px;
-        border-radius: 8px;
-        overflow-x: auto;
-    }
-</style>
+    <article class="note-detail">
+        <header class="note-header">
+            <h1 class="note-title">{{ note.title }}</h1>
+            <div class="note-meta">
+                <span>{{ note.created_at|date:"d M Y" }}</span> •
+                <span>Просмотров: {{ note.views_count }}</span>
+            </div>
 
-<script>
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    const csrftoken = getCookie('csrftoken');
+            <div class="note-tags" id="tag-container">
+                {% for tag in note.tags.all %}
+                    <span class="tag-badge" data-tag="{{ tag.name }}">
+                        {{ tag.name }}
+                        <span class="tag-remove">&times;</span>
+                    </span>
+                {% endfor %}
+                <div class="add-tag-box">
+                    <input type="text" id="new-tag-input" placeholder="новый тег">
+                    <button type="button" id="add-tag-btn" class="tag-add-btn" title="Добавить тег">+</button>
+                </div>
+            </div>
+        </header>
 
-    function buildTagBadge(tagName) {
-        const badge = document.createElement('span');
-        badge.className = 'tag-badge';
-        badge.dataset.tag = tagName;
+        <div class="note-content">
+            {{ content_html|safe }}
+        </div>
+    </article>
+</div>
+{% endblock %}
 
-        const removeBtn = document.createElement('span');
-        removeBtn.className = 'tag-remove';
-        removeBtn.innerHTML = '&times;';
-        removeBtn.onclick = () => removeTag(tagName);
-
-        badge.appendChild(document.createTextNode(tagName + ' '));
-        badge.appendChild(removeBtn);
-        return badge;
-    }
-
-    async function regenerateTags() {
-        const btn = document.getElementById('regenerate-tags-btn');
-        const status = document.getElementById('regenerate-status');
-
-        btn.disabled = true;
-        const originalText = btn.textContent;
-        btn.textContent = 'Генерируем теги...';
-        status.style.display = 'block';
-        status.className = 'regenerate-status info';
-        status.textContent = 'ИИ анализирует текущий текст заметки, это может занять несколько секунд...';
-
-        try {
-            const response = await fetch("{% url 'regenerate_tags' note.pk %}", {
-                method: 'POST',
-                headers: {'X-CSRFToken': csrftoken}
-            });
-            const data = await response.json();
-
-            if (response.ok && data.status === 'ok') {
-                const container = document.getElementById('tag-container');
-                const addBox = container.querySelector('.add-tag-box');
-
-                container.querySelectorAll('.tag-badge').forEach(el => el.remove());
-                data.tags.forEach(tagName => {
-                    container.insertBefore(buildTagBadge(tagName), addBox);
-                });
-
-                status.className = 'regenerate-status success';
-                status.textContent = `Готово: ${data.tags.length} тег(ов) обновлено.`;
-            } else {
-                status.className = 'regenerate-status error';
-                status.textContent = data.message || 'Не удалось обновить теги.';
-            }
-        } catch (e) {
-            status.className = 'regenerate-status error';
-            status.textContent = 'Ошибка сети при обращении к серверу.';
-        } finally {
-            btn.disabled = false;
-            btn.textContent = originalText;
-            setTimeout(() => { status.style.display = 'none'; }, 6000);
-        }
-    }
-
-    async function addTag() {
-        const input = document.getElementById('new-tag-input');
-        const addBtn = document.getElementById('add-tag-btn');
-        const tagName = input.value.trim();
-        if (!tagName) return;
-
-        // Не дублируем уже отображённый тег (регистронезависимо)
-        const lowerName = tagName.toLowerCase();
-        const already = Array.from(document.querySelectorAll('.tag-badge'))
-            .some(el => (el.dataset.tag || '').toLowerCase() === lowerName);
-        if (already) {
-            input.value = '';
-            return;
-        }
-
-        addBtn.disabled = true;
-
-        const formData = new FormData();
-        formData.append('tag_name', tagName);
-
-        try {
-            const response = await fetch("{% url 'add_tag' note.pk %}", {
-                method: 'POST',
-                headers: {'X-CSRFToken': csrftoken},
-                body: formData
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                const container = document.getElementById('tag-container');
-                const addBox = container.querySelector('.add-tag-box');
-                container.insertBefore(buildTagBadge(data.tag), addBox);
-                input.value = '';
-            }
-        } finally {
-            addBtn.disabled = false;
-            input.focus();
-        }
-    }
-
-    async function removeTag(tagName) {
-        const formData = new FormData();
-        formData.append('tag_name', tagName);
-
-        const response = await fetch("{% url 'remove_tag' note.pk %}", {
-            method: 'POST',
-            headers: {'X-CSRFToken': csrftoken},
-            body: formData
-        });
-
-        if (response.ok) {
-            const tagEl = document.querySelector(`.tag-badge[data-tag="${CSS.escape(tagName)}"]`);
-            if (tagEl) tagEl.remove();
-        }
-    }
-
-    // Smart View Tracking
-    setTimeout(async () => {
-        try {
-            const response = await fetch("{% url 'track_view' note.pk %}", {
-                method: 'POST',
-                headers: {'X-CSRFToken': csrftoken}
-            });
-            if (response.ok) {
-                const data = await response.json();
-                if (data.status === 'view_tracked') {
-                    console.log('View tracked:', data.count);
-                }
-            }
-        } catch (e) {
-            console.error('View tracking failed', e);
-        }
-    }, 15000); // 15 секунд
-</script>
+{% block extra_body %}
+<script src="{% static 'js/note_detail.js' %}"></script>
 {% endblock %}

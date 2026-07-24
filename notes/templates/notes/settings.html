@@ -1,9 +1,16 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Настройки - Quartz{% endblock %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/settings.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="form-wrapper">
+<div class="form-wrapper" id="settings-form-root"
+     data-models-url="{% url 'get_provider_models' %}"
+     data-current-model="{{ form.instance.model_name|default:'' }}">
     <h2>Настройки ИИ</h2>
     <p class="form-description">
         Выберите провайдера — список моделей запрашивается напрямую у него и всегда актуален.
@@ -53,85 +60,8 @@
         </div>
     </form>
 </div>
+{% endblock %}
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const providerSelect = document.getElementById('id_provider');
-    const modelSelect = document.getElementById('id_model_name');
-    const apiKeyInput = document.getElementById('id_api_key');
-    const loadingLabel = document.getElementById('models-loading');
-    const errorLabel = document.getElementById('models-error');
-
-    if (!providerSelect || !modelSelect) return;
-
-    const modelsUrl = "{% url 'get_provider_models' %}";
-    // Модель, уже сохранённая в настройках (если есть) — чтобы выделить её после загрузки списка.
-    const currentModel = "{{ form.instance.model_name|default:'' }}";
-
-    let debounceTimer = null;
-
-    function fetchModels() {
-        const provider = providerSelect.value;
-        if (!provider) {
-            modelSelect.innerHTML = '';
-            return;
-        }
-
-        loadingLabel.style.display = 'inline';
-        errorLabel.style.display = 'none';
-        modelSelect.disabled = true;
-
-        const params = new URLSearchParams({ provider: provider });
-        const apiKey = apiKeyInput ? apiKeyInput.value.trim() : '';
-        if (apiKey) {
-            params.set('api_key', apiKey);
-        }
-
-        fetch(modelsUrl + '?' + params.toString(), {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-            .then(resp => resp.json())
-            .then(data => {
-                modelSelect.innerHTML = '';
-                const models = data.models || [];
-
-                if (models.length === 0) {
-                    errorLabel.style.display = 'inline';
-                }
-
-                models.forEach(modelId => {
-                    const opt = document.createElement('option');
-                    opt.value = modelId;
-                    opt.textContent = modelId;
-                    if (modelId === currentModel) {
-                        opt.selected = true;
-                    }
-                    modelSelect.appendChild(opt);
-                });
-            })
-            .catch(() => {
-                errorLabel.style.display = 'inline';
-            })
-            .finally(() => {
-                loadingLabel.style.display = 'none';
-                modelSelect.disabled = false;
-            });
-    }
-
-    providerSelect.addEventListener('change', fetchModels);
-
-    // Перезапрашиваем список при изменении API-ключа (с задержкой, чтобы не долбить сервер на каждый символ)
-    if (apiKeyInput) {
-        apiKeyInput.addEventListener('input', function () {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(fetchModels, 600);
-        });
-    }
-
-    // Если провайдер уже выбран при загрузке страницы (редактирование настроек) — сразу подгружаем модели
-    if (providerSelect.value) {
-        fetchModels();
-    }
-});
-</script>
+{% block extra_body %}
+<script src="{% static 'js/settings.js' %}"></script>
 {% endblock %}

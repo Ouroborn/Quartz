@@ -1,22 +1,27 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Заметки - Quartz{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/index.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="index-header">
     <h1>Мои заметки</h1>
     <div class="search-bar">
-        <form method="get" style="display: flex; gap: 10px; width: 100%;">
-            <input type="text" name="q" placeholder="Поиск по названию или тексту..." value="{{ query|default:'' }}" style="margin-bottom: 0;">
+        <form method="get" class="search-form">
+            <input type="text" name="q" placeholder="Поиск по названию или тексту..." value="{{ query|default:'' }}">
             <button type="submit" class="btn">Найти</button>
         </form>
     </div>
 </div>
 
 {% if tag_filter %}
-    <div style="margin-bottom: 20px;">
-        Фильтр по тегу: <span class="tag-badge">{{ tag_filter }}</span> 
-        <a href="{% url 'index' %}" style="font-size: 13px; margin-left: 10px;">Сбросить</a>
+    <div class="tag-filter-row">
+        Фильтр по тегу: <span class="tag-badge">{{ tag_filter }}</span>
+        <a href="{% url 'index' %}" class="tag-filter-reset">Сбросить</a>
     </div>
 {% endif %}
 
@@ -24,9 +29,9 @@
     <table id="notesTable">
         <thead>
             <tr>
-                <th onclick="sortTable(0)">Название</th>
-                <th onclick="sortTable(1)">Дата создания</th>
-                <th onclick="sortTable(2)">Просмотры</th>
+                <th data-sort-col="0">Название</th>
+                <th data-sort-col="1">Дата создания</th>
+                <th data-sort-col="2">Просмотры</th>
             </tr>
         </thead>
         <tbody>
@@ -45,125 +50,14 @@
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="3" style="text-align: center; padding: 40px;">Заметок пока нет.</td>
+                    <td colspan="3" class="empty-row">Заметок пока нет.</td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+{% endblock %}
 
-<style>
-    .index-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-        gap: 20px;
-    }
-    .search-bar {
-        flex-grow: 1;
-        max-width: 400px;
-    }
-    .table-wrapper {
-        background-color: var(--bg-sidebar);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 14px;
-    }
-    th {
-        text-align: left;
-        padding: 12px 20px;
-        background-color: #252525;
-        color: #888;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 11px;
-        letter-spacing: 0.5px;
-        cursor: pointer;
-        user-select: none;
-    }
-    th:hover {
-        color: var(--text-header);
-        background-color: #2a2a2a;
-    }
-    td {
-        padding: 12px 20px;
-        border-top: 1px solid var(--border);
-    }
-    tr:hover td {
-        background-color: #1f1f1f;
-    }
-    .note-link {
-        font-weight: 600;
-        color: var(--text-header);
-        text-decoration: none;
-    }
-    .note-link:hover {
-        color: var(--accent);
-    }
-    .note-tags-inline {
-        margin-top: 4px;
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-    .tag-small {
-        font-size: 11px;
-        color: #555;
-    }
-</style>
-
-<script>
-    function sortTable(n) {
-        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-        table = document.getElementById("notesTable");
-        switching = true;
-        dir = "asc";
-        while (switching) {
-            switching = false;
-            rows = table.rows;
-            for (i = 1; i < (rows.length - 1); i++) {
-                shouldSwitch = false;
-                x = rows[i].getElementsByTagName("TD")[n];
-                y = rows[i + 1].getElementsByTagName("TD")[n];
-                
-                var xVal = x.getAttribute("data-value") || x.innerText.toLowerCase();
-                var yVal = y.getAttribute("data-value") || y.innerText.toLowerCase();
-                
-                // Check if numeric
-                var xNum = parseFloat(xVal.replace(/[^\d.-]/g, ''));
-                var yNum = parseFloat(yVal.replace(/[^\d.-]/g, ''));
-                
-                if (!isNaN(xNum) && !isNaN(yNum) && n !== 0) { // Column 0 (title) is text
-                    if (dir == "asc") {
-                        if (xNum > yNum) { shouldSwitch = true; break; }
-                    } else if (dir == "desc") {
-                        if (xNum < yNum) { shouldSwitch = true; break; }
-                    }
-                } else {
-                    if (dir == "asc") {
-                        if (xVal > yVal) { shouldSwitch = true; break; }
-                    } else if (dir == "desc") {
-                        if (xVal < yVal) { shouldSwitch = true; break; }
-                    }
-                }
-            }
-            if (shouldSwitch) {
-                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                switching = true;
-                switchcount++;
-            } else {
-                if (switchcount == 0 && dir == "asc") {
-                    dir = "desc";
-                    switching = true;
-                }
-            }
-        }
-    }
-</script>
+{% block extra_body %}
+<script src="{% static 'js/index.js' %}"></script>
 {% endblock %}

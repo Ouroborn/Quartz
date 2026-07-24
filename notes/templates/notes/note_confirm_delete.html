@@ -1,15 +1,20 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Удаление заметки - Quartz{% endblock %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/note_confirm_delete.css' %}">
+{% endblock %}
+
 {% block content %}
-<div style="text-align: center; padding: 60px 0;">
-    <h2 style="color: #ff5555; margin-bottom: 20px;">Удалить заметку?</h2>
-    <p style="margin-bottom: 30px; font-size: 18px;">Вы уверены, что хотите удалить заметку "<strong>{{ note.title }}</strong>"?<br>Это действие необратимо.</p>
+<div class="delete-confirm-wrap">
+    <h2>Удалить заметку?</h2>
+    <p>Вы уверены, что хотите удалить заметку "<strong>{{ note.title }}</strong>"?<br>Это действие необратимо.</p>
     <form method="post">
         {% csrf_token %}
-        <div style="display: flex; gap: 15px; justify-content: center;">
-            <button type="submit" class="btn" style="background-color: #ff5555;">Да, удалить</button>
+        <div class="delete-confirm-actions">
+            <button type="submit" class="btn btn-danger">Да, удалить</button>
             <a href="{% url 'note_detail' note.pk %}" class="btn btn-outline">Отмена</a>
         </div>
     </form>

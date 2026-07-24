@@ -7,7 +7,7 @@ from .models import Tag, Note, NoteRelation, UserSettings
 
 logger = logging.getLogger(__name__)
 
-MAX_TAGS = 25
+MAX_TAGS = 15
 
 # Провайдеры отдают через /models вообще все свои модели — эмбеддинги,
 # генерацию картинок, TTS/STT, модерацию и т.п. Явного флага "это чат-модель"
