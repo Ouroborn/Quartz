@@ -259,3 +259,38 @@ input:focus, textarea:focus {
     gap: 10px;
     z-index: 100;
 }
+
+/* --- Кастомный скроллбар --- */
+
+/* Стандарт Firefox */
+*, .sidebar-content, .main-content {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) var(--bg-sidebar);
+}
+
+/* Chrome / Edge / Opera / Brave для конкретных блоков */
+::-webkit-scrollbar,
+.sidebar-content::-webkit-scrollbar,
+.main-content::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track,
+.sidebar-content::-webkit-scrollbar-track,
+.main-content::-webkit-scrollbar-track {
+    background: var(--bg-sidebar);
+}
+
+::-webkit-scrollbar-thumb,
+.sidebar-content::-webkit-scrollbar-thumb,
+.main-content::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover,
+.sidebar-content::-webkit-scrollbar-thumb:hover,
+.main-content::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+}
